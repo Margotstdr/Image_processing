@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
-#include "bmp8.h"
+#include "bmp8/bmp8.h"
 
 t_bmp8* bmp8_loadImage(const char* filename) {
 

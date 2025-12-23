@@ -1,5 +1,5 @@
 #include <stdio.h>
-#include "bmp8.h"
+#include "bmp8/bmp8.h"
 
 int main() {
     t_bmp8 *image = NULL;
