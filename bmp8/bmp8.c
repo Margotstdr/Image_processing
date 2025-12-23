@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
-#include "bmp8/bmp8.h"
+#include "bmp8.h"
 
 t_bmp8* bmp8_loadImage(const char* filename) {
 
@@ -22,7 +22,7 @@ t_bmp8* bmp8_loadImage(const char* filename) {
     }
 
     // fread lit des blocs d’octets depuis un fichier ouvert avec FILE*.
-    int img_long = fread(img->header, sizeof(unsigned char), 54, file);
+    unsigned int img_long = fread(img->header, sizeof(unsigned char), 54, file);
 
     if (img_long != 54 || img->header[0] != 'B' || img->header[1] != 'M') {
         printf("Error: not an BMP file\n");
@@ -36,7 +36,24 @@ t_bmp8* bmp8_loadImage(const char* filename) {
     img->colorDepth = *(unsigned int*)&img->header[28];
     img->dataSize = *(unsigned int*)&img->header[34];
 
-    fread(img->colorTable, sizeof(unsigned char), 1024, file);
+    unsigned int dataOffset = *(unsigned int*)&img->header[10];
+    unsigned int paletteSize = (dataOffset > 54) ? dataOffset - 54 : 0;
+
+    if (paletteSize > 0) {
+        size_t paletteRead = paletteSize > sizeof(img->colorTable) ? sizeof(img->colorTable) : paletteSize;
+        fread(img->colorTable, sizeof(unsigned char), paletteRead, file);
+        if (paletteSize > paletteRead) {
+            fseek(file, dataOffset, SEEK_SET);
+        }
+    }
+
+    unsigned int bytesPerPixel = img->colorDepth / 8;
+    unsigned int rowSize = ((img->width * bytesPerPixel) + 3) & ~3; // rows are 4-byte aligned
+    unsigned int computedDataSize = rowSize * img->height;
+
+    if (img->dataSize == 0 || img->dataSize < computedDataSize) {
+        img->dataSize = computedDataSize;
+    }
 
     img->data = (unsigned char*)malloc(img->dataSize);
 
@@ -47,6 +64,7 @@ t_bmp8* bmp8_loadImage(const char* filename) {
         return NULL;
     }
 
+    fseek(file, dataOffset, SEEK_SET);
     fread(img->data, sizeof(unsigned char), img->dataSize, file);
 
     printf("Image loaded successfully !\n");
@@ -65,8 +83,22 @@ void bmp8_saveImage(const char* filename, t_bmp8* img) {
         return;
     }
 
+    unsigned int dataOffset = *(unsigned int*)&img->header[10];
+    unsigned int paletteSize = (dataOffset > 54) ? dataOffset - 54 : 0;
+    unsigned int bytesPerPixel = img->colorDepth / 8;
+    unsigned int rowSize = ((img->width * bytesPerPixel) + 3) & ~3;
+    img->dataSize = rowSize * img->height;
+
+    unsigned int fileSize = dataOffset + img->dataSize;
+    memcpy(&img->header[2], &fileSize, sizeof(unsigned int));
+    memcpy(&img->header[34], &img->dataSize, sizeof(unsigned int));
+
     fwrite(img->header, sizeof(unsigned char), 54, file);
-    fwrite(img->colorTable, sizeof(unsigned char), 1024, file);
+
+    if (paletteSize > 0) {
+        fwrite(img->colorTable, sizeof(unsigned char), paletteSize, file);
+    }
+
     fwrite(img->data, sizeof(unsigned char), img->dataSize, file);
 
     printf("Image saved successfully !\n");
@@ -99,7 +131,7 @@ void bmp8_printInfo(t_bmp8* img) {
 
 void bmp8_negative(t_bmp8* img) {
 
-    for (int i = 0; i < img->dataSize; i++) {
+    for (unsigned int i = 0; i < img->dataSize; i++) {
         img->data[i] = 255 - img->data[i];
     }
 
@@ -108,9 +140,9 @@ void bmp8_negative(t_bmp8* img) {
 
 void bmp8_brightness(t_bmp8* img, int value) {
 
-    for (int i = 0; i < img->dataSize; i++) {
+    for (unsigned int i = 0; i < img->dataSize; i++) {
 
-        int pixel = img->data[i] + value;
+        unsigned int pixel = img->data[i] + value;
 
         if (pixel > 255) {
             pixel = 255;
@@ -126,7 +158,7 @@ void bmp8_brightness(t_bmp8* img, int value) {
 
 void bmp8_threshold(t_bmp8* img, int threshold) {
 
-    for (int i = 0; i < img->dataSize; i++) {
+    for (unsigned int i = 0; i < img->dataSize; i++) {
         
         if (img->data[i] >= threshold) {
             img->data[i] = 255;
@@ -143,54 +175,49 @@ void bmp8_applyFilter(t_bmp8* img, float** kernel, int kernelSize) {
     unsigned int w = img->width;
     unsigned int h = img->height;
 
-    int n = kernelSize / 2;
+    unsigned int n = kernelSize / 2;
 
-    unsigned char* temp = (unsigned char*)malloc(img->dataSize);
+    unsigned char *tempData = (unsigned char *)malloc(img->dataSize);
 
-    if (temp == NULL) {
-        printf("Error: Memory allocation failed for filter.\n");
-        return;
-    }
+    if (tempData == NULL) {
+        return; // Sécurité en cas d'erreur mémoire
+    };
 
-    memcpy(temp, img->data, img->dataSize); 
-
+    memcpy(tempData, img->data, img->dataSize);
     // 3. Parcours de l'image (convolution)
     // Selon la consigne : on ignore les bords.
     // On commence à y=n et on s'arrête avant h-n.
-    for (int y = n; y < h - n; y++) {
+    for (unsigned int y = n; y < h - n; y++) {
 
-        for (int w_idx = n; w_idx < w - n; w_idx++) {
+        for (unsigned int x = n; x < w - n; x++) {
+            
+            if (y == h/2 && x == w/2) {
+                printf("DEBUG PIXEL (%d, %d):\n", x, y);
+                float debugSum = 0.0f;
+                for (unsigned ky = -n; ky <= n; ky++) {
+                    for (unsigned int kx = -n; kx <= n; kx++) {
+                        unsigned char pVal = img->data[((y + ky) * w) + (x + kx)];
+                        float kVal = kernel[ky + n][kx + n];
+                        //float kVal = 1.0f / 9.0f; // assuming a 3x3 box blur for debug
+                        
+                        printf("  Voisin(%d,%d) : Pixel=%d * Kernel=%.4f\n", kx, ky, pVal, kVal);
+                        debugSum += pVal * kVal;
+                    }
+                }
+                printf("  -> SOMME TOTALE : %.4f\n", debugSum);
+            }
 
             float sum = 0.0f;
 
-            // Parcours du noyau (kernel)
-            // Les indices varient de -n à +n comme demandé
-            for (int ky = -n; ky <= n; ky++) {
+            if (sum < 0.0f) sum = 0.0f;
+            if (sum > 255.0f) sum = 255.0f;
 
-                for (int kx = -n; kx <= n; kx++) {
-
-                    // -- Récupération du pixel voisin --
-                    // Index dans le tableau 1D : (ligne * largeur) + colonne
-                    int pixel_idx = ((y + ky) * w) + (w_idx + kx);
-                    char pixel_val = img->data[pixel_idx];
-
-                    // -- Récupération de la valeur du kernel --
-                    // Le tableau C commence à 0, donc on décale l'index mathématique (-n devient 0)
-                    float kernel_val = kernel[ky + n][kx + n];
-
-                    sum += pixel_val * kernel_val;
-                }
-            }
-
-            if (sum > 255) sum = 255;
-
-            if (sum < 0) sum = 0;
-
-            temp[y * w + w_idx] = (char) sum;
+            // On écrit le résultat validé dans l'image temporaire
+            tempData[y * w + x] = (unsigned char)sum;
         }
     }
 
-    memcpy(img->data, temp, img->dataSize);
+    memcpy(img->data, tempData, img->dataSize);
 
-    free(temp);
+    free(tempData);
 }

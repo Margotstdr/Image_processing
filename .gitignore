@@ -1,5 +1,5 @@
 # Ignore JetBrains IDE project files
 .idea/
-
+/.app/
 # macOS system files
 .DS_Store

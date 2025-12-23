@@ -11,21 +11,12 @@ int main() {
     float matrix[3][3];
     float *kernel[3];
 
-    // Load the image
-    image = bmp8_loadImage("barbara_gray.bmp");
-    if (image == NULL) {
-        printf("Failed to load image.\n");
-        return 1; // Exit with error
-    }
-
-    printf("Original Image Information:\n");
-    bmp8_printInfo(image);
 
     do {
-        printf("Please choose an option:\n");
+        printf("\nPlease choose an option:\n");
         printf("1. Open an image\n");
         printf("2. Save an image\n");
-        printf("3.Apply a filter\n");
+        printf("3. Apply a filter\n");
         printf("4. Display image information\n");
         printf("5. Quit\n");
         printf("Your choice: ");
@@ -33,7 +24,7 @@ int main() {
 
         switch (choice) {
             case 1: 
-                printf("File path: ");
+                printf("\nFile path: ");
                 scanf("%s", filepath);
 
                 image = bmp8_loadImage(filepath);
@@ -41,7 +32,7 @@ int main() {
                 break;
 
             case 2: 
-                printf("File path: ");
+                printf("\nFile path: ");
                 scanf("%s", filepath);
 
                 bmp8_saveImage(filepath, image);
@@ -49,8 +40,10 @@ int main() {
                 break;
 
             case 3: 
-                do {
-                    printf("Please choose a filter:\n");
+            {
+                int exitFilters = 0;
+                while (!exitFilters) {
+                    printf("\nPlease choose a filter:\n");
                     printf("1. Negative\n");
                     printf("2. Brightness\n");
                     printf("3. Black and white\n");
@@ -68,27 +61,30 @@ int main() {
                         case 1: 
 
                             bmp8_negative(image);
-                            printf("Filter applied successfully!\n");
+                            printf("\nFilter applied successfully!\n");
+                            exitFilters = 1;
 
                             break;
 
                         case 2: 
 
-                            printf("Enter brightness adjustment value (positive or negative): ");
+                            printf("\nEnter brightness adjustment value (positive or negative): ");
                             scanf("%d", &value);
 
                             bmp8_brightness(image, value);
-                            printf("Filter applied successfully!\n");
+                            printf("\nFilter applied successfully!\n");
+                            exitFilters = 1;
 
                             break;
 
                         case 3: 
 
-                            printf("Enter threshold value (0-255): ");
+                            printf("\nEnter threshold value (0-255): ");
                             scanf("%d", &value);
 
                             bmp8_threshold(image, value);
                             printf("Filter applied successfully!\n");
+                            exitFilters = 1;
 
                             break;
 
@@ -108,81 +104,111 @@ int main() {
                             kernel[2] = matrix[2];
 
                             bmp8_applyFilter(image, kernel, 3);
-                            printf("Filter applied successfully!\n");
+                            printf("\nFilter applied successfully!\n");
+                            exitFilters = 1;
 
                             break;
 
                         case 5: //gaussian blur
                             
-                            val = 1.0f / 16.0F;
+                            val = 1.0f / 16.0f;
 
-                            float matrix[3][3] = {
-                                { 1*val, 2*val, 1*val },
-                                { 2*val, 4*val, 2*val },
-                                { 1*val, 2*val, 1*val }
-                            };
+                            matrix[0][0] = 1.0f * val;
+                            matrix[0][1] = 2.0f * val;
+                            matrix[0][2] = 1.0f * val;
+
+                            matrix[1][0] = 2.0f * val;
+                            matrix[1][1] = 4.0f * val;
+                            matrix[1][2] = 2.0f * val;
+
+                            matrix[2][0] = 1.0f * val;
+                            matrix[2][1] = 2.0f * val;
+                            matrix[2][2] = 1.0f * val;
 
                             kernel[0] = matrix[0];
                             kernel[1] = matrix[1];
                             kernel[2] = matrix[2];
 
                             bmp8_applyFilter(image, kernel, 3);
-                            printf("Filter applied successfully!\n");
+                            printf("\nFilter applied successfully!\n");
+                            exitFilters = 1;
                             
                             break;
 
                         case 6: //sharpness
 
-                            float matrix[3][3] = {
-                                {0.0f, -1.0f, -0.0f},
-                                {-1.0f, 5.0f, -1.0f},
-                                {0.0f, -1.0f, 0.0f}
-                            };
+                            matrix[0][0] = 0.0f; 
+                            matrix[0][1] = -1.0f;
+                            matrix[0][2] = 0.0f;
+
+                            matrix[1][0] = -1.0f;
+                            matrix[1][1] = 5.0f;
+                            matrix[1][2] = -1.0f;
+
+                            matrix[2][0] = 0.0f;
+                            matrix[2][1] = -1.0f;
+                            matrix[2][2] = 0.0f;
 
                             kernel[0] = matrix[0];
                             kernel[1] = matrix[1];
                             kernel[2] = matrix[2];
 
                             bmp8_applyFilter(image, kernel, 3);
-                            printf("Filter applied successfully!\n");
+                            printf("\nFilter applied successfully!\n");
+                            exitFilters = 1;
 
                             break;
 
                         case 7: //outline
-                            
-                            float matrix[3][3] = {
-                                {-1.0f, -1.0f, -1.0f},
-                                {-1.0f, 8.0f, -1.0f},
-                                {-1.0f, -1.0f, -1.0f}
-                            };
+
+                            matrix[0][0] = -1.0f;
+                            matrix[0][1] = -1.0f;
+                            matrix[0][2] = -1.0f;
+
+                            matrix[1][0] = -1.0f;
+                            matrix[1][1] = 8.0f;
+                            matrix[1][2] = -1.0f;
+
+                            matrix[2][0] = -1.0f;
+                            matrix[2][1] = -1.0f;
+                            matrix[2][2] = -1.0f;
 
                             kernel[0] = matrix[0];
                             kernel[1] = matrix[1];
                             kernel[2] = matrix[2];
 
                             bmp8_applyFilter(image, kernel, 3);
-                            printf("Filter applied successfully!\n");
+                            printf("\nFilter applied successfully!\n");
+                            exitFilters = 1;
 
                             break;
 
                         case 8: //emboss
 
-                            float matrix[3][3] = {
-                                {-2.0f, -1.0f, 0.0f},
-                                {-1.0f, 1.0f, 1.0f},
-                                {0.0f, 1.0f, 2.0f}
-                            };
+                            matrix[0][0] = -2.0f;
+                            matrix[0][1] = -1.0f;
+                            matrix[0][2] = 0.0f;
+
+                            matrix[1][0] = -1.0f;
+                            matrix[1][1] = 1.0f;
+                            matrix[1][2] = 1.0f;
+
+                            matrix[2][0] = 0.0f;
+                            matrix[2][1] = 1.0f;
+                            matrix[2][2] = 2.0f;
 
                             kernel[0] = matrix[0];
                             kernel[1] = matrix[1];
                             kernel[2] = matrix[2];
 
                             bmp8_applyFilter(image, kernel, 3);
-                            printf("Filter applied successfully!\n");
+                            printf("\nFilter applied successfully!\n");
+                            exitFilters = 1;
 
                             break;
 
                         case 9: //return to previous menu
+                            exitFilters = 1;
                             break;
 
                         default:
@@ -192,7 +218,8 @@ int main() {
                             break;
                     }
 
-                }while (filterChoice != 9);
+                }
+            }
                 
                 break;
 
@@ -204,16 +231,14 @@ int main() {
 
             case 5: 
 
-                printf("Quitting program.\n");
+                printf("\nQuitting program.\n");
                 bmp8_free(image);
 
                 break;
 
             default: 
-                    printf("Choix invalide.\n");
+                    printf("\nChoix invalide.\n");
                     break;
-            
-
         }
 
     } while (choice != 5);
