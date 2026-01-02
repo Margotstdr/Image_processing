@@ -169,55 +169,55 @@ void bmp8_threshold(t_bmp8* img, int threshold) {
 }
 
 
-void bmp8_applyFilter(t_bmp8* img, float** kernel, int kernelSize) {
+void bmp8_applyFilter(t_bmp8 *img, float **kernel, int kernelSize) {
+    // 1. CONVERSION EN INT (Crucial pour éviter le bug des boucles infinies)
+    int w = (int)img->width;
+    int h = (int)img->height;
+    int n = kernelSize / 2;
 
-    // 1. Récupération des dimensions
-    unsigned int w = img->width;
-    unsigned int h = img->height;
-
-    unsigned int n = kernelSize / 2;
-
+    // 2. BUFFER TEMPORAIRE
     unsigned char *tempData = (unsigned char *)malloc(img->dataSize);
-
-    if (tempData == NULL) {
-        return; // Sécurité en cas d'erreur mémoire
-    };
-
+    if (tempData == NULL) return;
+    
+    // On copie l'image originale (pour garder les bords intacts)
     memcpy(tempData, img->data, img->dataSize);
-    // 3. Parcours de l'image (convolution)
-    // Selon la consigne : on ignore les bords.
-    // On commence à y=n et on s'arrête avant h-n.
-    for (unsigned int y = n; y < h - n; y++) {
 
-        for (unsigned int x = n; x < w - n; x++) {
+    // 3. CONVOLUTION
+    // On utilise bien des 'int' partout
+    for (int y = n; y < h - n; y++) {
+        for (int x = n; x < w - n; x++) {
             
-            if (y == h/2 && x == w/2) {
-                printf("DEBUG PIXEL (%d, %d):\n", x, y);
-                float debugSum = 0.0f;
-                for (unsigned ky = -n; ky <= n; ky++) {
-                    for (unsigned int kx = -n; kx <= n; kx++) {
-                        unsigned char pVal = img->data[((y + ky) * w) + (x + kx)];
-                        float kVal = kernel[ky + n][kx + n];
-                        //float kVal = 1.0f / 9.0f; // assuming a 3x3 box blur for debug
-                        
-                        printf("  Voisin(%d,%d) : Pixel=%d * Kernel=%.4f\n", kx, ky, pVal, kVal);
-                        debugSum += pVal * kVal;
-                    }
-                }
-                printf("  -> SOMME TOTALE : %.4f\n", debugSum);
-            }
-
             float sum = 0.0f;
 
+            // Boucles du noyau (kernel) avec 'int' obligatoirement
+            for (int ky = -n; ky <= n; ky++) {
+                for (int kx = -n; kx <= n; kx++) {
+                    
+                    // Calcul des indices
+                    int currentY = y + ky;
+                    int currentX = x + kx;
+                    
+                    // Récupération des valeurs
+                    int pixelIdx = (currentY * w) + currentX;
+                    unsigned char pixelVal = img->data[pixelIdx];
+                    float kernelVal = kernel[ky + n][kx + n];
+
+                    // Accumulation
+                    sum += pixelVal * kernelVal;
+                }
+            }
+
+            // 4. SATURATION (Clamping)
             if (sum < 0.0f) sum = 0.0f;
             if (sum > 255.0f) sum = 255.0f;
 
-            // On écrit le résultat validé dans l'image temporaire
+            // 5. ÉCRITURE DU RÉSULTAT
+            // C'est cette ligne qui manquait ou qui ne s'exécutait pas !
             tempData[y * w + x] = (unsigned char)sum;
         }
     }
 
+    // 6. COPIE FINALE
     memcpy(img->data, tempData, img->dataSize);
-
     free(tempData);
 }
