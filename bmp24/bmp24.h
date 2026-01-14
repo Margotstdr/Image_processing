@@ -2,6 +2,7 @@
 #define BMP24_H
 
 #include <stdint.h>
+#include <stdio.h>
 
 // Offsets for the BMP header
 #define BITMAP_MAGIC 0x00 // offset 0
@@ -21,6 +22,8 @@
 
 // Constant for the color depth
 #define DEFAULT_DEPTH 0x18 // 24
+
+#pragma pack(push, 1)
 
 typedef struct {
     uint8_t red;
@@ -49,6 +52,8 @@ typedef struct {
     uint32_t ncolors;
     uint32_t importantcolors;
 } t_bmp_info;
+
+#pragma pack(pop)
 
 typedef struct {
     t_bmp_header header;

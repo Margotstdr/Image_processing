@@ -256,8 +256,33 @@ void bmp24_saveImage (t_bmp24 * img, const char * filename) {
         return;
     }
 
-    file_rawWrite(BITMAP_MAGIC, &img->header, sizeof(t_bmp_header), 1, file);
-    file_rawWrite(HEADER_SIZE, &img->header_info, sizeof(t_bmp_info), 1, file);
+    if (img == NULL || img->data == NULL) {
+        printf("Error: image is NULL.\n");
+        fclose(file);
+        return;
+    }
+
+    uint32_t rowSize = ((img->colorDepth * img->width + 31) / 32) * 4;
+    uint32_t imageSize = rowSize * img->height;
+
+    img->header.type = BMP_TYPE;
+    img->header.offset = HEADER_SIZE + INFO_SIZE; // 54 bytes
+    img->header.size = img->header.offset + imageSize;
+    img->header.reserved1 = 0;
+    img->header.reserved2 = 0;
+
+    img->header_info.size = INFO_SIZE;
+    img->header_info.width = img->width;
+    img->header_info.height = img->height;
+    img->header_info.planes = 1;
+    img->header_info.bits = img->colorDepth;
+    img->header_info.compression = 0;
+    img->header_info.iamgesize = imageSize;
+    // keep existing resolutions / colors if present
+
+    fseek(file, 0, SEEK_SET);
+    fwrite(&img->header, sizeof(t_bmp_header), 1, file);
+    fwrite(&img->header_info, sizeof(t_bmp_info), 1, file);
 
     bmp24_writePixelData(img, file);
 
