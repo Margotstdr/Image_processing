@@ -1,6 +1,9 @@
 #ifndef BMP8_H
 #define BMP8_H
 
+#define SIZE 3
+#define F_BOX (1.0f/9.0f)
+
 typedef struct {
     unsigned char header[54];
     unsigned char colorTable[1024];
