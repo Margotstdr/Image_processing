@@ -80,7 +80,7 @@ int main() {
                     }
 
                     case 2: {
-                                
+                        
                         printf("\nFile path: ");
                         scanf("%s", outputPath);
 
@@ -251,7 +251,7 @@ int main() {
                     }
 
                     case 2: {
-                                
+
                         printf("\nFile path: ");
                         scanf("%s", outputPath);
 
@@ -310,6 +310,7 @@ int main() {
                                 }
 
                                 case 4: { // box blur
+
                                     bmp24_applyFilter(image24, kernel_box_ptr, 3);
                                     printf("\nFilter applied successfully!\n");
 
@@ -318,6 +319,7 @@ int main() {
                                 }
 
                                 case 5: { // gaussian blur
+
                                     bmp24_applyFilter(image24, kernel_gauss_ptr, 3);
                                     printf("\nFilter applied successfully!\n");
 
@@ -326,6 +328,7 @@ int main() {
                                 }
 
                                 case 6: { // sharpness
+
                                     bmp24_applyFilter(image24, kernel_sharp_ptr, 3);
                                     printf("\nFilter applied successfully!\n");
 
@@ -334,6 +337,7 @@ int main() {
                                 }
 
                                 case 7: { // outline
+
                                     bmp24_applyFilter(image24, kernel_outline_ptr, 3);
                                     printf("\nFilter applied successfully!\n");
 
@@ -342,6 +346,7 @@ int main() {
                                 }
 
                                 case 8: { // emboss
+
                                     bmp24_applyFilter(image24, kernel_emboss_ptr, 3);
                                     printf("\nFilter applied successfully!\n");
 
