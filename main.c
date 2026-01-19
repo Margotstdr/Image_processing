@@ -2,6 +2,7 @@
 #include <string.h>
 #include "bmp8/bmp8.h"
 #include "bmp24/bmp24.h"
+#include "histogram/histogram.h"
 
 int main() {
     int choice;
@@ -56,14 +57,16 @@ int main() {
 
         if (format == 1) {
 
-            do {
+            int run8 = 1;
+            while (run8) {
 
                 printf("\nPlease choose an option:\n");
                 printf("1. Open an image\n");
                 printf("2. Save an image\n");
                 printf("3. Apply a filter\n");
                 printf("4. Display image information\n");
-                printf("5. Quit\n");
+                printf("5. Histogram equalization\n");
+                printf("6. Quit\n");
                 printf("Your choice: ");
                 scanf("%d", &choice);
 
@@ -211,8 +214,22 @@ int main() {
 
                     case 5: {
 
+                        if (!image8) {
+                            printf("No image loaded. Please open an image first.\n");
+                            break;
+                        }
+
+                        bmp8_equalize(image8, NULL);
+                        printf("\nHistogram equalization applied successfully!\n");
+
+                        break;
+                    }
+
+                    case 6: {
+
                         printf("\nQuitting program.\n");
                         bmp8_free(image8);
+                        run8 = 0;
 
                         break;
                     }
@@ -223,18 +240,20 @@ int main() {
                     }
                 }
 
-            } while (choice != 5);
+            }
         
             //return 0;
 
         } else if (format == 2) {
 
-            do {
+            int run24 = 1;
+            while (run24) {
                 printf("\nPlease choose an option:\n");
                 printf("1. Open an image\n");
                 printf("2. Save an image\n");
                 printf("3. Apply a filter\n");
-                printf("4. Quit\n");
+                printf("4. Histogram equalization\n");
+                printf("5. Quit\n");
                 printf("Your choice: ");
                 scanf("%d", &choice);
 
@@ -371,16 +390,34 @@ int main() {
 
                     case 4: {
 
+                        if (!image24) {
+                            printf("No image loaded. Please open an image first.\n");
+                            break;
+                        }
+
+                        bmp24_equalize(image24);
+                        printf("\nHistogram equalization applied successfully!\n");
+
+                        break;
+                    }
+
+                    case 5: {
+
                         printf("\nQuitting program.\n");
                         bmp24_free(image24);
+                        run24 = 0;
 
+                        break;
+                    }
+
+                    default: {
+                        printf("Invalid choice.\n");
                         break;
                     }
                 }
 
-            } while (choice != 4);
+            }
             
-
         } else {
             printf("Invalid format choice. Please try again.\n");
         }

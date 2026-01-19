@@ -5,6 +5,7 @@ set(CMAKE_C_STANDARD 11)
 
 add_executable(CProject
         main.c
-        bmp8.c
-        bmp24.c
+        bmp8/bmp8.c
+        bmp24/bmp24.c
+        histogram/histogram.c
 )
